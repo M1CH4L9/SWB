@@ -81,7 +81,7 @@ char line_buffer[64];
 uint8_t line_pos = 0;
 
 //przycisk
-uint8_t btn_prev = 1;
+uint8_t btn_prev = 0;
 uint32_t btn_press_time = 0;
 uint32_t last_click_time = 0;
 uint8_t click_count = 0;
@@ -257,15 +257,15 @@ int main(void)
 
 			//obsługa przycisku
 			if (button_mode == 0) {
-				// czytamy stan z pinu fizycznego
+				//czytamy stan z pinu fizycznego
 				GPIO_PinState btn_now = HAL_GPIO_ReadPin(B1_GPIO_Port, B1_Pin);
 
-				//Wykrycie wcisniecia (zmienilo sie z 1 na 0)
-				if (btn_now == GPIO_PIN_RESET && btn_prev == GPIO_PIN_SET) {
+				//Wykrycie wcisniecia (zmienilo sie z 0 na 1)
+				if (btn_now == GPIO_PIN_SET && btn_prev == GPIO_PIN_RESET) {
 					btn_press_time = sys_tick;
 				}
-				//wykrycie puszczenia (zmienilo sie z 0 na 1)
-				else if (btn_now == GPIO_PIN_SET && btn_prev == GPIO_PIN_RESET) {
+				//wykrycie puszczenia (zmienilo sie z 1 na 0)
+				else if (btn_now == GPIO_PIN_RESET && btn_prev == GPIO_PIN_SET) {
 					//ile ms trzymany przycisk
 					uint32_t press_duration = sys_tick - btn_press_time;
 
@@ -296,8 +296,6 @@ int main(void)
 						if (blink_delay > 100) blink_delay -= 100;
 						UART_SendString(">> Przycisk: 2 kliki (szybsze mruganie)\r\n");
 
-					} else if (click_count == 3) {
-						UART_SendString(">> Przycisk: 3 kliki (kiedys to zapisze do Flash, na razie nic)\r\n");
 					}
 
 					//zerujemy licznik klikow zeby nie spamowalo komunikatem co milisekunde
@@ -650,16 +648,19 @@ void SystemClock_Config(void)
 
 //nowy wysyłacz dma
 void UART_SendString(char* str) {
-	//1. Czekamy aż poprzednie DMA skończy nadawać (żeby nie nadpisać bufora w trakcie)
-	//Uwaga: minimalnie to blokuje jeśli spamujemy, ale spełnia wymóg użycia DMA dla TX
-	while (huart2.gState != HAL_UART_STATE_READY) {}
-
-	//2. Kopiujemy tekst z bezpiecznego miejsca do naszego globalnego bufora
-	strncpy(tx_buffer, str, 255);
-	tx_buffer[255] = '\0'; //upewniamy się, że na końcu jest znak końca stringa
-
-	//3. Odpalamy sprzętowe wysyłanie w tle!
-	HAL_UART_Transmit_DMA(&huart2, (uint8_t*)tx_buffer, strlen(tx_buffer));
+//	//1. Czekamy aż poprzednie DMA skończy nadawać (żeby nie nadpisać bufora w trakcie)
+//	//Uwaga: minimalnie to blokuje jeśli spamujemy, ale spełnia wymóg użycia DMA dla TX
+//	while (huart2.gState != HAL_UART_STATE_READY) {}
+//
+//	//2. Kopiujemy tekst z bezpiecznego miejsca do naszego globalnego bufora
+//	strncpy(tx_buffer, str, 255);
+//	tx_buffer[255] = '\0'; //upewniamy się, że na końcu jest znak końca stringa
+//
+//	//3. Odpalamy sprzętowe wysyłanie w tle!
+//	HAL_UART_Transmit_DMA(&huart2, (uint8_t*)tx_buffer, strlen(tx_buffer));
+	//jebać tamto nie działało
+	//test
+	HAL_UART_Transmit(&huart2, (uint8_t*)str, strlen(str), 100);
 }
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
