@@ -153,6 +153,9 @@ int main(void)
   /* USER CODE BEGIN 2 */
 	HAL_TIM_Base_Start_IT(&htim6);
 	HAL_TIM_Base_Start_IT(&htim7);
+
+	HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_1);
+
 //	HAL_UARTEx_ReceiveToIdle_DMA(&huart2, pData, Size)
 
 //	uint8_t i = 0;
