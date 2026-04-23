@@ -1,8 +1,8 @@
 /* USER CODE BEGIN Header */
 /**
   ******************************************************************************
-  * @file    cmd_parser.h
-  * @brief   Text command parser interface
+  * @file    flash_manager.h
+  * @brief   Persistent application configuration interface
   ******************************************************************************
   * @attention
   *
@@ -17,28 +17,40 @@
   */
 /* USER CODE END Header */
 /* Define to prevent recursive inclusion -------------------------------------*/
-#ifndef __CMD_PARSER_H__
-#define __CMD_PARSER_H__
+#ifndef __FLASH_MANAGER_H__
+#define __FLASH_MANAGER_H__
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 /* Includes ------------------------------------------------------------------*/
-#include "flash_manager.h"
 #include "main.h"
 
-#include <stddef.h>
+/* Exported constants --------------------------------------------------------*/
+#define FLASH_MANAGER_STORAGE_ADDR      0x0807F800U
+#define FLASH_MANAGER_PAGE_SIZE         0x800U
+#define FLASH_MANAGER_MAGIC             0x43464731U
+#define FLASH_MANAGER_VERSION           1U
+
+/* Exported types ------------------------------------------------------------*/
+typedef struct
+{
+  float offset_roll;
+  float offset_pitch;
+  float max_roll;
+  float max_pitch;
+  float threshold_g;
+  uint8_t volume_percent;
+} AppConfig_t;
 
 /* Exported functions prototypes ---------------------------------------------*/
-void CMD_Parser_Init(void);
-uint8_t CMD_Parser_ProcessLine(char *line,
-                               AppConfig_t *config,
-                               char *response,
-                               size_t response_len);
+void Flash_SetDefaults(AppConfig_t *config);
+HAL_StatusTypeDef Flash_LoadConfig(AppConfig_t *config);
+HAL_StatusTypeDef Flash_SaveConfig(const AppConfig_t *config);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* __CMD_PARSER_H__ */
+#endif /* __FLASH_MANAGER_H__ */

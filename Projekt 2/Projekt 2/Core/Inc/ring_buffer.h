@@ -1,8 +1,8 @@
 /* USER CODE BEGIN Header */
 /**
   ******************************************************************************
-  * @file    cmd_parser.h
-  * @brief   Text command parser interface
+  * @file    ring_buffer.h
+  * @brief   Simple byte ring buffer interface
   ******************************************************************************
   * @attention
   *
@@ -17,28 +17,37 @@
   */
 /* USER CODE END Header */
 /* Define to prevent recursive inclusion -------------------------------------*/
-#ifndef __CMD_PARSER_H__
-#define __CMD_PARSER_H__
+#ifndef __RING_BUFFER_H__
+#define __RING_BUFFER_H__
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 /* Includes ------------------------------------------------------------------*/
-#include "flash_manager.h"
 #include "main.h"
 
-#include <stddef.h>
+/* Exported constants --------------------------------------------------------*/
+#define RB_SIZE 64U
+
+/* Exported types ------------------------------------------------------------*/
+typedef struct
+{
+  uint8_t buffer[RB_SIZE];
+  volatile uint16_t head;
+  volatile uint16_t tail;
+  volatile uint16_t count;
+} RingBuffer_t;
 
 /* Exported functions prototypes ---------------------------------------------*/
-void CMD_Parser_Init(void);
-uint8_t CMD_Parser_ProcessLine(char *line,
-                               AppConfig_t *config,
-                               char *response,
-                               size_t response_len);
+void RB_Init(RingBuffer_t *rb);
+int8_t RB_Write(RingBuffer_t *rb, uint8_t data);
+int8_t RB_Read(RingBuffer_t *rb, uint8_t *data);
+uint8_t RB_IsEmpty(const RingBuffer_t *rb);
+uint8_t RB_IsFull(const RingBuffer_t *rb);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* __CMD_PARSER_H__ */
+#endif /* __RING_BUFFER_H__ */
