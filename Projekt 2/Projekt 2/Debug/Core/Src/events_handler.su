@@ -1,0 +1,9 @@
+../Core/Src/events_handler.c:73:6:Events_Init	16	static
+../Core/Src/events_handler.c:108:6:Events_Process	16	static
+../Core/Src/events_handler.c:123:6:Events_GPIO_EXTI_Callback	24	static
+../Core/Src/events_handler.c:149:13:Events_ProcessButton	24	static
+../Core/Src/events_handler.c:202:13:Events_ProcessMic	24	static
+../Core/Src/events_handler.c:233:16:Events_ButtonIsPressed	8	static
+../Core/Src/events_handler.c:239:13:Events_GPIO_Init	40	static
+../Core/Src/events_handler.c:262:13:Events_RegisterButtonClick	16	static
+../Core/Src/events_handler.c:282:16:Events_MicQueuePop	24	static,ignoring_inline_asm

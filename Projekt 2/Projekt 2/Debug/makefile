@@ -1,6 +1,6 @@
 ################################################################################
 # Automatically-generated file. Do not edit!
-# Toolchain: GNU Tools for STM32 (14.3.rel1)
+# Toolchain: GNU Tools for STM32 (13.3.rel1)
 ################################################################################
 
 -include ../makefile.init
@@ -34,34 +34,34 @@ $(wildcard ../makefile.init) \
 $(wildcard ../makefile.targets) \
 
 
-BUILD_ARTIFACT_NAME := Lecture_6_ADC_DAC_PWM
+BUILD_ARTIFACT_NAME := Project_2_SWB
 BUILD_ARTIFACT_EXTENSION := elf
 BUILD_ARTIFACT_PREFIX :=
 BUILD_ARTIFACT := $(BUILD_ARTIFACT_PREFIX)$(BUILD_ARTIFACT_NAME)$(if $(BUILD_ARTIFACT_EXTENSION),.$(BUILD_ARTIFACT_EXTENSION),)
 
 # Add inputs and outputs from these tool invocations to the build variables 
 EXECUTABLES += \
-Lecture_6_ADC_DAC_PWM.elf \
+Project_2_SWB.elf \
 
 MAP_FILES += \
-Lecture_6_ADC_DAC_PWM.map \
+Project_2_SWB.map \
 
 SIZE_OUTPUT += \
 default.size.stdout \
 
 OBJDUMP_LIST += \
-Lecture_6_ADC_DAC_PWM.list \
+Project_2_SWB.list \
 
 
 # All Target
 all: main-build
 
 # Main-build Target
-main-build: Lecture_6_ADC_DAC_PWM.elf secondary-outputs
+main-build: Project_2_SWB.elf secondary-outputs
 
 # Tool invocations
-Lecture_6_ADC_DAC_PWM.elf Lecture_6_ADC_DAC_PWM.map: $(OBJS) $(USER_OBJS) C:\Users\macmac\Documents\GitHub\SWB_PL_denne_macmac\Wyklady\wyklad_6\Lecture_6_ADC_DAC_PWM\STM32G491RETX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-gcc -o "Lecture_6_ADC_DAC_PWM.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"C:\Users\macmac\Documents\GitHub\SWB_PL_denne_macmac\Wyklady\wyklad_6\Lecture_6_ADC_DAC_PWM\STM32G491RETX_FLASH.ld" --specs=nosys.specs -Wl,-Map="Lecture_6_ADC_DAC_PWM.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+Project_2_SWB.elf Project_2_SWB.map: $(OBJS) $(USER_OBJS) C:\Users\micha\Downloads\Lecture_6_ADC_DAC_PWM\STM32G491RETX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-gcc -o "Project_2_SWB.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"C:\Users\micha\Downloads\Lecture_6_ADC_DAC_PWM\STM32G491RETX_FLASH.ld" --specs=nosys.specs -Wl,-Map="Project_2_SWB.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 
@@ -70,14 +70,14 @@ default.size.stdout: $(EXECUTABLES) makefile objects.list $(OPTIONAL_TOOL_DEPS)
 	@echo 'Finished building: $@'
 	@echo ' '
 
-Lecture_6_ADC_DAC_PWM.list: $(EXECUTABLES) makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-objdump -h -S $(EXECUTABLES) > "Lecture_6_ADC_DAC_PWM.list"
+Project_2_SWB.list: $(EXECUTABLES) makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-objdump -h -S $(EXECUTABLES) > "Project_2_SWB.list"
 	@echo 'Finished building: $@'
 	@echo ' '
 
 # Other Targets
 clean:
-	-$(RM) Lecture_6_ADC_DAC_PWM.elf Lecture_6_ADC_DAC_PWM.list Lecture_6_ADC_DAC_PWM.map default.size.stdout
+	-$(RM) Project_2_SWB.elf Project_2_SWB.list Project_2_SWB.map default.size.stdout
 	-@echo ' '
 
 secondary-outputs: $(SIZE_OUTPUT) $(OBJDUMP_LIST)
