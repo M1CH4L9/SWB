@@ -1,0 +1,4 @@
+../Core/Src/cmd_parser.c:31:6:CMD_Parser_Init	4	static
+../Core/Src/cmd_parser.c:35:9:CMD_Parser_ProcessLine	120	static
+../Core/Src/cmd_parser.c:126:13:CMD_Parser_SetResponse	24	static
+../Core/Src/cmd_parser.c:135:13:CMD_Parser_TrimLine	24	static

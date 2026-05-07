@@ -1,0 +1,10 @@
+../Core/Src/flash_manager.c:60:6:Flash_SetDefaults	2
+../Core/Src/flash_manager.c:75:19:Flash_LoadConfig	4
+../Core/Src/flash_manager.c:96:19:Flash_SaveConfig	10
+../Core/Src/flash_manager.c:170:17:Flash_CalculateRecordCrc	1
+../Core/Src/flash_manager.c:181:17:Flash_CalculateCrc	2
+../Core/Src/flash_manager.c:194:16:Flash_RecordIsBlank	3
+../Core/Src/flash_manager.c:210:16:Flash_RecordIsValid	4
+../Core/Src/flash_manager.c:221:13:Flash_BuildRecord	1
+../Core/Src/flash_manager.c:232:26:Flash_GetEraseParameters	6
+../Core/Src/flash_manager.c:277:26:Flash_VerifyRecord	2

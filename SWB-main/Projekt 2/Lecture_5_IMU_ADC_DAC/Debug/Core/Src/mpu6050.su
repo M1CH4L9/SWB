@@ -1,0 +1,5 @@
+../Core/Src/mpu6050.c:50:19:MPU6050_Init	40	static
+../Core/Src/mpu6050.c:99:19:MPU6050_ReadAccelRaw	40	static
+../Core/Src/mpu6050.c:128:6:MPU6050_ComputeAngles	24	static
+../Core/Src/mpu6050.c:150:19:MPU6050_Update	24	static
+../Core/Src/mpu6050.c:177:14:MPU6050_Kalman1D_Update	24	static

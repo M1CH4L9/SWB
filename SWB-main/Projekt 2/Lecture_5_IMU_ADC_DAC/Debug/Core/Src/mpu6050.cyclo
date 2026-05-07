@@ -1,0 +1,5 @@
+../Core/Src/mpu6050.c:50:19:MPU6050_Init	4
+../Core/Src/mpu6050.c:99:19:MPU6050_ReadAccelRaw	4
+../Core/Src/mpu6050.c:128:6:MPU6050_ComputeAngles	3
+../Core/Src/mpu6050.c:150:19:MPU6050_Update	4
+../Core/Src/mpu6050.c:177:14:MPU6050_Kalman1D_Update	2
