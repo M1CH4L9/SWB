@@ -758,15 +758,23 @@ void GUI_UpdateDiagnostic(uint32_t timeout_count, float last_distance, uint16_t 
   diag_last_servo = last_servo;
 }
 
-void GUI_DrawScanFrame(const ScanState_t *scan, const TargetResult_t *target)
+void GUI_DrawScanFrame(const ScanState_t *scan,
+                       const TargetResult_t *status_target,
+                       const TargetResult_t *highlight_target)
 {
   uint8_t i;
   uint16_t chart_h = GUI_SCAN_BOTTOM - GUI_SCAN_TOP;
   char status[32];
+  const TargetResult_t *marker = highlight_target;
 
   if (scan == NULL)
   {
     return;
+  }
+
+  if (marker == NULL)
+  {
+    marker = status_target;
   }
 
   ILI9341_FillRect(0, GUI_SCAN_TOP, ILI9341_WIDTH,
@@ -801,7 +809,7 @@ void GUI_DrawScanFrame(const ScanState_t *scan, const TargetResult_t *target)
                      bar_h,
                      color);
 
-    if ((target != NULL) && (target->found != 0U) && (target->bar_index == i))
+    if ((marker != NULL) && (marker->found != 0U) && (marker->bar_index == i))
     {
       GUI_DrawRectBorder(x, GUI_SCAN_BOTTOM - bar_h,
                          SCAN_BAR_WIDTH_PX, bar_h, GUI_COLOR_HIGHLIGHT);
@@ -813,20 +821,20 @@ void GUI_DrawScanFrame(const ScanState_t *scan, const TargetResult_t *target)
 
   if (scan->active != 0U)
   {
-    if ((target != NULL) && (target->found != 0U))
+    if ((status_target != NULL) && (status_target->found != 0U))
     {
       snprintf(status, sizeof(status), "Odczyt %dcm pasek %u",
-               (int)target->distance_cm, (unsigned)target->bar_index);
+               (int)status_target->distance_cm, (unsigned)status_target->bar_index);
     }
     else
     {
       snprintf(status, sizeof(status), "Skanowanie...");
     }
   }
-  else if ((target != NULL) && (target->found != 0U))
+  else if ((status_target != NULL) && (status_target->found != 0U))
   {
     snprintf(status, sizeof(status), "Cel %dcm pasek %u",
-             (int)target->distance_cm, (unsigned)target->bar_index);
+             (int)status_target->distance_cm, (unsigned)status_target->bar_index);
   }
   else
   {

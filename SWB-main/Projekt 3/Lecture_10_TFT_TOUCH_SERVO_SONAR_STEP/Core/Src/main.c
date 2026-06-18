@@ -89,17 +89,24 @@ int main(void)
       if (Scan_Task(&scan_state, &app_config) != 0U)
       {
         uint8_t bar = scan_state.current_bar;
-        TargetResult_t display_target;
+        TargetResult_t live_target;
+        TargetResult_t closest_target;
+        uint8_t count = (uint8_t)(bar + 1U);
 
         last_measured_dist = scan_state.distances[bar];
         last_servo_pos = scan_state.servo_positions[bar];
 
-        display_target.found = scan_state.valid[bar];
-        display_target.bar_index = bar;
-        display_target.distance_cm = scan_state.distances[bar];
-        display_target.servo_pos = scan_state.servo_positions[bar];
+        live_target.found = scan_state.valid[bar];
+        live_target.bar_index = bar;
+        live_target.distance_cm = scan_state.distances[bar];
+        live_target.servo_pos = scan_state.servo_positions[bar];
 
-        GUI_DrawScanFrame(&scan_state, &display_target);
+        closest_target = Target_FindClosest(scan_state.distances,
+                                            scan_state.valid,
+                                            scan_state.servo_positions,
+                                            count);
+
+        GUI_DrawScanFrame(&scan_state, &live_target, &closest_target);
       }
 
       if (scan_state.sweep_done != 0U)
@@ -114,7 +121,7 @@ int main(void)
           StepperMap_GotoServo(last_target.servo_pos, &app_config);
         }
 
-        GUI_DrawScanFrame(&scan_state, &last_target);
+        GUI_DrawScanFrame(&scan_state, &last_target, &last_target);
         scan_state.sweep_done = 0U;
 
         if (GUI_IsContinuousScan() != 0U)
