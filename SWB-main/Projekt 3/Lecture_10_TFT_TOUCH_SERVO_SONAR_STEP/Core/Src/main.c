@@ -65,6 +65,7 @@ int main(void)
   StepperMap_Init();
 
   (void)FlashConfig_Load(&app_config);
+  XPT2046_ApplyCalibration(&app_config);
   StepperMap_SetPosition(app_config.stepper_left);
 
   Scan_Init(&scan_state);
