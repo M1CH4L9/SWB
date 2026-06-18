@@ -811,7 +811,19 @@ void GUI_DrawScanFrame(const ScanState_t *scan, const TargetResult_t *target)
   ILI9341_FillRect(0, GUI_SCAN_BOTTOM, ILI9341_WIDTH,
                    ILI9341_HEIGHT - GUI_SCAN_BOTTOM, GUI_COLOR_PANEL);
 
-  if ((target != NULL) && (target->found != 0U))
+  if (scan->active != 0U)
+  {
+    if ((target != NULL) && (target->found != 0U))
+    {
+      snprintf(status, sizeof(status), "Odczyt %dcm pasek %u",
+               (int)target->distance_cm, (unsigned)target->bar_index);
+    }
+    else
+    {
+      snprintf(status, sizeof(status), "Skanowanie...");
+    }
+  }
+  else if ((target != NULL) && (target->found != 0U))
   {
     snprintf(status, sizeof(status), "Cel %dcm pasek %u",
              (int)target->distance_cm, (unsigned)target->bar_index);

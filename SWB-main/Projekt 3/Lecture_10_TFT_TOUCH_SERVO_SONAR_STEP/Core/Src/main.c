@@ -89,16 +89,17 @@ int main(void)
       if (Scan_Task(&scan_state, &app_config) != 0U)
       {
         uint8_t bar = scan_state.current_bar;
-        uint8_t count = (uint8_t)(bar + 1U);
+        TargetResult_t display_target;
 
         last_measured_dist = scan_state.distances[bar];
         last_servo_pos = scan_state.servo_positions[bar];
 
-        last_target = Target_FindClosest(scan_state.distances,
-                                         scan_state.valid,
-                                         scan_state.servo_positions,
-                                         count);
-        GUI_DrawScanFrame(&scan_state, &last_target);
+        display_target.found = scan_state.valid[bar];
+        display_target.bar_index = bar;
+        display_target.distance_cm = scan_state.distances[bar];
+        display_target.servo_pos = scan_state.servo_positions[bar];
+
+        GUI_DrawScanFrame(&scan_state, &display_target);
       }
 
       if (scan_state.sweep_done != 0U)
