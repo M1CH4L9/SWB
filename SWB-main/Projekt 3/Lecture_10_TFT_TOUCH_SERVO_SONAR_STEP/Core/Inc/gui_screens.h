@@ -34,7 +34,9 @@ void GUI_Init(SonarConfig_t *config);
 GUI_Action_t GUI_Task(SonarConfig_t *config);
 GUI_Screen_t GUI_GetScreen(void);
 void GUI_SetScreen(GUI_Screen_t screen);
-void GUI_DrawScanFrame(const ScanState_t *scan, const TargetResult_t *target);
+void GUI_DrawScanFrame(const ScanState_t *scan,
+                       const TargetResult_t *status_target,
+                       const TargetResult_t *highlight_target);
 void GUI_UpdateDiagnostic(uint32_t timeout_count, float last_distance, uint16_t last_servo);
 uint8_t GUI_IsContinuousScan(void);
 
