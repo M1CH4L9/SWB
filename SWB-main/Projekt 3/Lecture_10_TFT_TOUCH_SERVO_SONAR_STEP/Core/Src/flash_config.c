@@ -1,6 +1,6 @@
 /*
  * flash_config.c
- * Ulozeni a nacteni konfigurace z posledni stranky Flash
+ * Flash-backed configuration storage
  */
 
 #include "flash_config.h"

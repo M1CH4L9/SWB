@@ -1,6 +1,6 @@
 /*
  * gui_screens.h
- * Dotykove rozhrani: konfigurace, sken, kalibrace, diagnostika
+ * Touch GUI: config, scan, calibration, diagnostic
  */
 
 #ifndef GUI_SCREENS_H

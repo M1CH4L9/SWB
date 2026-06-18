@@ -1,6 +1,6 @@
 /*
  * target_finder.c
- * Validace vzorku a vyber nejblizsiho mereni
+ * Sample validation and nearest target selection
  */
 
 #include "target_finder.h"

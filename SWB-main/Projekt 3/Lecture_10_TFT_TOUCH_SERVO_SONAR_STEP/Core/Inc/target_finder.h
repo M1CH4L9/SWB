@@ -1,6 +1,6 @@
 /*
  * target_finder.h
- * Filtrovani mereni a hledani nejblizsiho cile
+ * Measurement filtering and nearest target detection
  */
 
 #ifndef TARGET_FINDER_H

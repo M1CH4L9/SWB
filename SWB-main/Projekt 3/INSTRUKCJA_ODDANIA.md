@@ -108,8 +108,6 @@ Po udanym flashu ekran TFT powinien pokazac ekran **KONFIGURACE**.
 4. Postaw cos przed sonarem - zobaczysz paski i podswietlenie najblizszego celu.
 5. **STOP** - powrot do konfiguracji.
 
-**Easter egg (wymaganie):** na ekranie konfiguracji szybko kliknij 2 razy w ekran - pojawi sie napis.
-
 ---
 
 ## 8. Jesli cos nie dziala (szybkie fixy)
@@ -186,7 +184,6 @@ Jesli prowadzacy chce osobno raport i osobno kod - wyslij ten sam ZIP lub rozdzi
 - [ ] W ZIP jest raport `.docx`
 - [ ] Jest zrzut ekranu GUI
 - [ ] Jest krotki film z dzialaniem
-- [ ] Komentarze w kodzie sa po czesku (wymaganie z PDF)
 - [ ] Na zajeciach sprawdziles dzialanie na prawdziwej plytce
 
 ---

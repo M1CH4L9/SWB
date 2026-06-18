@@ -83,7 +83,7 @@ HAL_StatusTypeDef Sonar_ReadOnce(float *distance_cm, uint32_t timeout_ms) {
 
 	/*
 	 * HC-SR04:
-	 * dystans [cm] = czas impulsu ECHO [us] / 58
+	 * distance [cm] = ECHO pulse width [us] / 58
 	 */
 	*distance_cm = (float) sonar_width_us / 58.0f;
 

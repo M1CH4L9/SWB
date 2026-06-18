@@ -1,6 +1,6 @@
 /*
  * gui_screens.c
- * Ctyri obrazovky projektu 3 + easter egg dvojkliku
+ * GUI screens for project 3
  */
 
 #include "gui_screens.h"
@@ -26,9 +26,6 @@
 
 #define GUI_SCAN_TOP        24U
 #define GUI_SCAN_BOTTOM     210U
-#define GUI_DOUBLE_TAP_MS   400U
-#define GUI_EASTER_EGG_MS   2000U
-
 typedef struct
 {
   uint16_t x;
@@ -49,10 +46,6 @@ static uint8_t gui_last_touch = 0U;
 static uint8_t gui_continuous = 1U;
 static uint8_t calib_step = CALIB_STEP_LEFT;
 static int32_t calib_temp_steps = 0;
-
-static uint32_t last_tap_tick = 0U;
-static uint8_t tap_count = 0U;
-static uint32_t easter_egg_until = 0U;
 
 static uint32_t diag_timeouts = 0U;
 static float diag_last_dist = 0.0f;
@@ -287,12 +280,6 @@ static void GUI_DrawConfigScreen(void)
 
   ILI9341_FillScreen(GUI_COLOR_BG);
 
-  if (easter_egg_until > HAL_GetTick())
-  {
-    GUI_DrawTextCentered(100, "no mozna by lepej", GUI_COLOR_HIGHLIGHT, 2);
-    return;
-  }
-
   GUI_DrawTextCentered(8, "KONFIGURACE", GUI_COLOR_TEXT, 2);
 
   GUI_DrawText(20, 28, "Min:", GUI_COLOR_TEXT, 2);
@@ -400,32 +387,6 @@ static void GUI_RedrawCurrent(void)
   }
 }
 
-static void GUI_HandleDoubleTap(void)
-{
-  uint32_t now = HAL_GetTick();
-
-  if ((now - last_tap_tick) < GUI_DOUBLE_TAP_MS)
-  {
-    tap_count++;
-  }
-  else
-  {
-    tap_count = 1U;
-  }
-
-  last_tap_tick = now;
-
-  if (tap_count >= 2U)
-  {
-    tap_count = 0U;
-    easter_egg_until = now + GUI_EASTER_EGG_MS;
-    if (gui_screen == GUI_SCREEN_CONFIG)
-    {
-      GUI_DrawConfigScreen();
-    }
-  }
-}
-
 static GUI_Action_t GUI_HandleConfigTouch(uint16_t x, uint16_t y)
 {
   if (GUI_PointInButton(x, y, &btn_min_m))
@@ -488,10 +449,6 @@ static GUI_Action_t GUI_HandleConfigTouch(uint16_t x, uint16_t y)
     gui_screen = GUI_SCREEN_DIAGNOSTIC;
     GUI_DrawDiagnosticScreen();
     return GUI_ACTION_OPEN_DIAG;
-  }
-  else
-  {
-    GUI_HandleDoubleTap();
   }
 
   GUI_DrawConfigScreen();
@@ -556,8 +513,6 @@ void GUI_Init(SonarConfig_t *config)
   gui_last_touch = 0U;
   gui_continuous = 1U;
   calib_step = CALIB_STEP_LEFT;
-  tap_count = 0U;
-  easter_egg_until = 0U;
 
   GUI_RedrawCurrent();
 }
@@ -657,14 +612,6 @@ GUI_Action_t GUI_Task(SonarConfig_t *config)
   uint8_t pressed = g_touch_pressed;
 
   gui_config = config;
-
-  if (gui_screen == GUI_SCREEN_CONFIG &&
-      easter_egg_until > 0U &&
-      easter_egg_until <= HAL_GetTick())
-  {
-    easter_egg_until = 0U;
-    GUI_DrawConfigScreen();
-  }
 
   if (pressed && !gui_last_touch)
   {

@@ -1,6 +1,6 @@
 /*
  * flash_config.h
- * Trvala konfigurace sonaru (Flash pamet)
+ * Persistent sonar configuration (Flash)
  */
 
 #ifndef FLASH_CONFIG_H
