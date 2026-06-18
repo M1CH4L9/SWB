@@ -1,6 +1,6 @@
 /*
  * gui_screens.c
- * GUI screens for project 3
+ * Touch GUI for 320x240 ILI9341
  */
 
 #include "gui_screens.h"
@@ -13,19 +13,29 @@
 #include <stdio.h>
 #include <string.h>
 
-#define GUI_COLOR_BG        ILI9341_BLACK
+#define GUI_COLOR_BG        0x0841U
 #define GUI_COLOR_TEXT      ILI9341_WHITE
-#define GUI_COLOR_BORDER    ILI9341_WHITE
-#define GUI_COLOR_PANEL     0x2104U
-#define GUI_COLOR_BTN_GO    ILI9341_GREEN
-#define GUI_COLOR_BTN_STOP  ILI9341_RED
-#define GUI_COLOR_BTN_NAV   ILI9341_BLUE
-#define GUI_COLOR_BTN_MUTE  0x4208U
+#define GUI_COLOR_MUTED     0xC618U
+#define GUI_COLOR_BORDER    0x5ACBU
+#define GUI_COLOR_PANEL     0x1082U
+#define GUI_COLOR_HEADER    0x0015U
+#define GUI_COLOR_FIELD     0x2104U
+#define GUI_COLOR_BTN_GO    0x05E0U
+#define GUI_COLOR_BTN_STOP  0xC800U
+#define GUI_COLOR_BTN_NAV   0x035FU
+#define GUI_COLOR_BTN_MUTE  0x4A69U
 #define GUI_COLOR_HIGHLIGHT ILI9341_YELLOW
-#define GUI_COLOR_INVALID   ILI9341_RED
+#define GUI_COLOR_BAR_OK    0x07FFU
+#define GUI_COLOR_BAR_BAD   0x8800U
+#define GUI_COLOR_INVALID   0x6000U
 
+#define GUI_HEADER_H        22U
 #define GUI_SCAN_TOP        24U
-#define GUI_SCAN_BOTTOM     210U
+#define GUI_SCAN_BOTTOM     206U
+#define GUI_FONT_SM         1U
+#define GUI_FONT_LG         2U
+#define GUI_MARGIN          8U
+
 typedef struct
 {
   uint16_t x;
@@ -45,7 +55,7 @@ static GUI_Screen_t gui_screen = GUI_SCREEN_CONFIG;
 static uint8_t gui_last_touch = 0U;
 static uint8_t gui_continuous = 1U;
 static uint8_t calib_step = CALIB_STEP_LEFT;
-static int32_t calib_temp_steps = 0;
+static int32_t calib_temp_steps = 0U;
 
 static uint32_t diag_timeouts = 0U;
 static float diag_last_dist = 0.0f;
@@ -68,6 +78,7 @@ static const uint8_t GLYPH_8[5] = {0x36, 0x49, 0x49, 0x49, 0x36};
 static const uint8_t GLYPH_9[5] = {0x06, 0x49, 0x49, 0x29, 0x1E};
 
 static const uint8_t GLYPH_A[5] = {0x7E, 0x11, 0x11, 0x11, 0x7E};
+static const uint8_t GLYPH_B[5] = {0x7F, 0x49, 0x49, 0x49, 0x36};
 static const uint8_t GLYPH_C[5] = {0x3E, 0x41, 0x41, 0x41, 0x22};
 static const uint8_t GLYPH_D[5] = {0x7F, 0x41, 0x41, 0x22, 0x1C};
 static const uint8_t GLYPH_E[5] = {0x7F, 0x49, 0x49, 0x49, 0x41};
@@ -83,7 +94,7 @@ static const uint8_t GLYPH_R[5] = {0x7F, 0x09, 0x19, 0x29, 0x46};
 static const uint8_t GLYPH_S[5] = {0x46, 0x49, 0x49, 0x49, 0x31};
 static const uint8_t GLYPH_T[5] = {0x01, 0x01, 0x7F, 0x01, 0x01};
 static const uint8_t GLYPH_U[5] = {0x3F, 0x40, 0x40, 0x40, 0x3F};
-static const uint8_t GLYPH_V[5] = {0x1F, 0x20, 0x40, 0x20, 0x1F};
+static const uint8_t GLYPH_W[5] = {0x7F, 0x20, 0x18, 0x20, 0x7F};
 static const uint8_t GLYPH_Z[5] = {0x61, 0x51, 0x49, 0x45, 0x43};
 
 static const uint8_t GLYPH_a[5] = {0x20, 0x54, 0x54, 0x54, 0x78};
@@ -92,7 +103,7 @@ static const uint8_t GLYPH_c[5] = {0x38, 0x44, 0x44, 0x44, 0x20};
 static const uint8_t GLYPH_d[5] = {0x38, 0x44, 0x44, 0x48, 0x7F};
 static const uint8_t GLYPH_e[5] = {0x38, 0x54, 0x54, 0x54, 0x18};
 static const uint8_t GLYPH_i[5] = {0x00, 0x44, 0x7D, 0x40, 0x00};
-static const uint8_t GLYPH_j[5] = {0x20, 0x40, 0x41, 0x3D, 0x00};
+static const uint8_t GLYPH_k[5] = {0x7F, 0x08, 0x14, 0x22, 0x41};
 static const uint8_t GLYPH_l[5] = {0x00, 0x41, 0x7F, 0x40, 0x00};
 static const uint8_t GLYPH_m[5] = {0x7C, 0x04, 0x18, 0x04, 0x78};
 static const uint8_t GLYPH_n[5] = {0x7C, 0x08, 0x04, 0x04, 0x78};
@@ -104,26 +115,30 @@ static const uint8_t GLYPH_t[5] = {0x04, 0x3F, 0x44, 0x40, 0x20};
 static const uint8_t GLYPH_u[5] = {0x3C, 0x40, 0x40, 0x20, 0x7C};
 static const uint8_t GLYPH_w[5] = {0x3C, 0x40, 0x30, 0x40, 0x3C};
 static const uint8_t GLYPH_y[5] = {0x0C, 0x50, 0x50, 0x50, 0x3C};
-static const uint8_t GLYPH_z[5] = {0x44, 0x64, 0x54, 0x4C, 0x44};
 
-static const GUI_Button_t btn_min_m = {20, 55, 40, 32};
-static const GUI_Button_t btn_min_p = {70, 55, 40, 32};
-static const GUI_Button_t btn_max_m = {170, 55, 40, 32};
-static const GUI_Button_t btn_max_p = {220, 55, 40, 32};
-static const GUI_Button_t btn_time_m = {70, 100, 40, 32};
-static const GUI_Button_t btn_time_p = {220, 100, 40, 32};
-static const GUI_Button_t btn_start = {10, 175, 90, 40};
-static const GUI_Button_t btn_calib = {115, 175, 90, 40};
-static const GUI_Button_t btn_diag = {220, 175, 90, 40};
+static const uint8_t GLYPH_COLON[5] = {0x00, 0x00, 0x24, 0x00, 0x00};
+static const uint8_t GLYPH_MINUS[5] = {0x08, 0x08, 0x08, 0x08, 0x08};
+static const uint8_t GLYPH_PLUS[5] = {0x08, 0x08, 0x3E, 0x08, 0x08};
+static const uint8_t GLYPH_DOT[5] = {0x00, 0x00, 0x60, 0x00, 0x00};
 
-static const GUI_Button_t btn_stop = {250, 4, 60, 28};
-static const GUI_Button_t btn_back = {10, 200, 80, 32};
+static const GUI_Button_t btn_min_m = {244, 30, 36, 34};
+static const GUI_Button_t btn_min_p = {284, 30, 36, 34};
+static const GUI_Button_t btn_max_m = {244, 70, 36, 34};
+static const GUI_Button_t btn_max_p = {284, 70, 36, 34};
+static const GUI_Button_t btn_time_m = {244, 110, 36, 34};
+static const GUI_Button_t btn_time_p = {284, 110, 36, 34};
+static const GUI_Button_t btn_start = {8, 198, 96, 34};
+static const GUI_Button_t btn_calib = {112, 198, 96, 34};
+static const GUI_Button_t btn_diag = {216, 198, 96, 34};
 
-static const GUI_Button_t btn_step_m = {40, 120, 60, 40};
-static const GUI_Button_t btn_step_p = {220, 120, 60, 40};
-static const GUI_Button_t btn_save_cal = {30, 175, 80, 36};
-static const GUI_Button_t btn_next_cal = {120, 175, 80, 36};
-static const GUI_Button_t btn_back_cal = {210, 175, 80, 36};
+static const GUI_Button_t btn_stop = {248, 2, 64, 20};
+static const GUI_Button_t btn_back = {8, 198, 96, 34};
+
+static const GUI_Button_t btn_step_m = {8, 118, 72, 40};
+static const GUI_Button_t btn_step_p = {240, 118, 72, 40};
+static const GUI_Button_t btn_save_cal = {8, 198, 96, 34};
+static const GUI_Button_t btn_next_cal = {112, 198, 96, 34};
+static const GUI_Button_t btn_back_cal = {216, 198, 96, 34};
 
 static const uint8_t *GUI_GetGlyph(char c)
 {
@@ -141,6 +156,7 @@ static const uint8_t *GUI_GetGlyph(char c)
     case '8': return GLYPH_8;
     case '9': return GLYPH_9;
     case 'A': return GLYPH_A;
+    case 'B': return GLYPH_B;
     case 'C': return GLYPH_C;
     case 'D': return GLYPH_D;
     case 'E': return GLYPH_E;
@@ -156,7 +172,7 @@ static const uint8_t *GUI_GetGlyph(char c)
     case 'S': return GLYPH_S;
     case 'T': return GLYPH_T;
     case 'U': return GLYPH_U;
-    case 'V': return GLYPH_V;
+    case 'W': return GLYPH_W;
     case 'Z': return GLYPH_Z;
     case 'a': return GLYPH_a;
     case 'b': return GLYPH_b;
@@ -164,7 +180,7 @@ static const uint8_t *GUI_GetGlyph(char c)
     case 'd': return GLYPH_d;
     case 'e': return GLYPH_e;
     case 'i': return GLYPH_i;
-    case 'j': return GLYPH_j;
+    case 'k': return GLYPH_k;
     case 'l': return GLYPH_l;
     case 'm': return GLYPH_m;
     case 'n': return GLYPH_n;
@@ -176,9 +192,24 @@ static const uint8_t *GUI_GetGlyph(char c)
     case 'u': return GLYPH_u;
     case 'w': return GLYPH_w;
     case 'y': return GLYPH_y;
-    case 'z': return GLYPH_z;
+    case ':': return GLYPH_COLON;
+    case '-': return GLYPH_MINUS;
+    case '+': return GLYPH_PLUS;
+    case '.': return GLYPH_DOT;
     default: return GLYPH_UNKNOWN;
   }
+}
+
+static uint16_t GUI_TextWidth(const char *text, uint8_t scale)
+{
+  uint16_t len = (uint16_t)strlen(text);
+
+  if (len == 0U)
+  {
+    return 0U;
+  }
+
+  return (uint16_t)(len * 6U * scale - scale);
 }
 
 static void GUI_DrawChar(uint16_t x, uint16_t y, char c, uint16_t color, uint8_t scale)
@@ -214,32 +245,57 @@ static void GUI_DrawText(uint16_t x, uint16_t y, const char *text, uint16_t colo
 
 static void GUI_DrawTextCentered(uint16_t y, const char *text, uint16_t color, uint8_t scale)
 {
-  uint16_t len = (uint16_t)strlen(text);
-  uint16_t w = (len > 0U) ? (uint16_t)(len * 6U * scale - scale) : 0U;
+  uint16_t w = GUI_TextWidth(text, scale);
   uint16_t x = (ILI9341_WIDTH > w) ? (ILI9341_WIDTH - w) / 2U : 0U;
 
   GUI_DrawText(x, y, text, color, scale);
 }
 
+static void GUI_DrawTextInRect(uint16_t x, uint16_t y, uint16_t w, uint16_t h,
+                               const char *text, uint16_t color, uint8_t scale)
+{
+  uint16_t text_w = GUI_TextWidth(text, scale);
+  uint16_t text_h = (uint16_t)(7U * scale);
+  uint16_t tx = x + (w > text_w ? (w - text_w) / 2U : 0U);
+  uint16_t ty = y + (h > text_h ? (h - text_h) / 2U : 0U);
+
+  GUI_DrawText(tx, ty, text, color, scale);
+}
+
 static void GUI_DrawRectBorder(uint16_t x, uint16_t y, uint16_t w, uint16_t h, uint16_t color)
 {
-  ILI9341_FillRect(x, y, w, 2U, color);
-  ILI9341_FillRect(x, y + h - 2U, w, 2U, color);
-  ILI9341_FillRect(x, y, 2U, h, color);
-  ILI9341_FillRect(x + w - 2U, y, 2U, h, color);
+  ILI9341_FillRect(x, y, w, 1U, color);
+  ILI9341_FillRect(x, y + h - 1U, w, 1U, color);
+  ILI9341_FillRect(x, y, 1U, h, color);
+  ILI9341_FillRect(x + w - 1U, y, 1U, h, color);
+}
+
+static void GUI_DrawHeader(const char *title)
+{
+  ILI9341_FillRect(0, 0, ILI9341_WIDTH, GUI_HEADER_H, GUI_COLOR_HEADER);
+  GUI_DrawTextInRect(0, 3, ILI9341_WIDTH, GUI_HEADER_H - 3U, title, GUI_COLOR_TEXT, GUI_FONT_SM);
 }
 
 static void GUI_DrawButton(const GUI_Button_t *btn, const char *label,
-                           uint16_t fill, uint16_t text_color)
+                           uint16_t fill, uint16_t text_color, uint8_t scale)
 {
-  uint8_t scale = 2U;
-  uint16_t text_w = (uint16_t)(strlen(label) * 6U * scale - scale);
-  uint16_t text_x = btn->x + (btn->w - text_w) / 2U;
-  uint16_t text_y = btn->y + (btn->h - 7U * scale) / 2U;
-
   ILI9341_FillRect(btn->x, btn->y, btn->w, btn->h, fill);
   GUI_DrawRectBorder(btn->x, btn->y, btn->w, btn->h, GUI_COLOR_BORDER);
-  GUI_DrawText(text_x, text_y, label, text_color, scale);
+  GUI_DrawTextInRect(btn->x, btn->y, btn->w, btn->h, label, text_color, scale);
+}
+
+static void GUI_DrawValueRow(uint16_t y, const char *label, const char *value,
+                             const GUI_Button_t *minus, const GUI_Button_t *plus)
+{
+  char minus_lbl[2] = "-";
+  char plus_lbl[2] = "+";
+
+  GUI_DrawText(GUI_MARGIN, y + 10U, label, GUI_COLOR_MUTED, GUI_FONT_SM);
+  ILI9341_FillRect(72, y, 164, 34U, GUI_COLOR_FIELD);
+  GUI_DrawRectBorder(72, y, 164, 34U, GUI_COLOR_BORDER);
+  GUI_DrawTextInRect(72, y, 164, 34U, value, GUI_COLOR_TEXT, GUI_FONT_LG);
+  GUI_DrawButton(minus, minus_lbl, GUI_COLOR_BTN_MUTE, GUI_COLOR_TEXT, GUI_FONT_LG);
+  GUI_DrawButton(plus, plus_lbl, GUI_COLOR_BTN_MUTE, GUI_COLOR_TEXT, GUI_FONT_LG);
 }
 
 static uint8_t GUI_PointInButton(uint16_t x, uint16_t y, const GUI_Button_t *btn)
@@ -276,89 +332,90 @@ static void GUI_CalibMoveServo(void)
 
 static void GUI_DrawConfigScreen(void)
 {
-  char line[32];
+  char line[16];
 
   ILI9341_FillScreen(GUI_COLOR_BG);
+  GUI_DrawHeader("KONFIGURACJA SKANU");
 
-  GUI_DrawTextCentered(8, "KONFIGURACE", GUI_COLOR_TEXT, 2);
-
-  GUI_DrawText(20, 28, "Min:", GUI_COLOR_TEXT, 2);
   snprintf(line, sizeof(line), "%u", (unsigned)gui_config->servo_min);
-  GUI_DrawText(130, 28, line, GUI_COLOR_TEXT, 2);
-  GUI_DrawButton(&btn_min_m, "-", GUI_COLOR_BTN_MUTE, GUI_COLOR_TEXT);
-  GUI_DrawButton(&btn_min_p, "+", GUI_COLOR_BTN_MUTE, GUI_COLOR_TEXT);
+  GUI_DrawValueRow(30U, "Min", line, &btn_min_m, &btn_min_p);
 
-  GUI_DrawText(20, 78, "Max:", GUI_COLOR_TEXT, 2);
   snprintf(line, sizeof(line), "%u", (unsigned)gui_config->servo_max);
-  GUI_DrawText(130, 78, line, GUI_COLOR_TEXT, 2);
-  GUI_DrawButton(&btn_max_m, "-", GUI_COLOR_BTN_MUTE, GUI_COLOR_TEXT);
-  GUI_DrawButton(&btn_max_p, "+", GUI_COLOR_BTN_MUTE, GUI_COLOR_TEXT);
+  GUI_DrawValueRow(70U, "Max", line, &btn_max_m, &btn_max_p);
 
-  snprintf(line, sizeof(line), "Cas: %us", (unsigned)(gui_config->scan_time_ms / 1000U));
-  GUI_DrawText(20, 128, line, GUI_COLOR_TEXT, 2);
-  GUI_DrawButton(&btn_time_m, "-", GUI_COLOR_BTN_MUTE, GUI_COLOR_TEXT);
-  GUI_DrawButton(&btn_time_p, "+", GUI_COLOR_BTN_MUTE, GUI_COLOR_TEXT);
+  snprintf(line, sizeof(line), "%us", (unsigned)(gui_config->scan_time_ms / 1000U));
+  GUI_DrawValueRow(110U, "Czas", line, &btn_time_m, &btn_time_p);
 
-  GUI_DrawButton(&btn_start, "START", GUI_COLOR_BTN_GO, GUI_COLOR_TEXT);
-  GUI_DrawButton(&btn_calib, "KALIBR", GUI_COLOR_BTN_NAV, GUI_COLOR_TEXT);
-  GUI_DrawButton(&btn_diag, "DIAG", GUI_COLOR_BTN_MUTE, GUI_COLOR_TEXT);
+  GUI_DrawText(GUI_MARGIN, 156U, "Zakres i czas skanu serwa", GUI_COLOR_MUTED, GUI_FONT_SM);
+
+  GUI_DrawButton(&btn_start, "START", GUI_COLOR_BTN_GO, GUI_COLOR_TEXT, GUI_FONT_SM);
+  GUI_DrawButton(&btn_calib, "KALIBR", GUI_COLOR_BTN_NAV, GUI_COLOR_TEXT, GUI_FONT_SM);
+  GUI_DrawButton(&btn_diag, "DIAG", GUI_COLOR_BTN_MUTE, GUI_COLOR_TEXT, GUI_FONT_SM);
 }
 
 static void GUI_DrawCalibrationScreen(void)
 {
-  char buf[32];
-  const char *step_name = "LEVA";
+  char buf[24];
+  const char *step_name = "LEWY";
 
-  ILI9341_FillScreen(GUI_COLOR_PANEL);
+  ILI9341_FillScreen(GUI_COLOR_BG);
+  GUI_DrawHeader("KALIBRACJA WSKAZNIKA");
 
   if (calib_step == CALIB_STEP_MID)
   {
-    step_name = "STRED";
+    step_name = "SRODEK";
   }
   else if (calib_step == CALIB_STEP_RIGHT)
   {
-    step_name = "PRAVA";
+    step_name = "PRAWY";
   }
 
-  GUI_DrawTextCentered(10, "KALIBRACE UKAZATELE", GUI_COLOR_TEXT, 2);
-  snprintf(buf, sizeof(buf), "Krok: %s", step_name);
-  GUI_DrawTextCentered(40, buf, GUI_COLOR_TEXT, 2);
-  snprintf(buf, sizeof(buf), "Kroky: %ld", (long)calib_temp_steps);
-  GUI_DrawTextCentered(70, buf, GUI_COLOR_TEXT, 2);
+  snprintf(buf, sizeof(buf), "Punkt: %s", step_name);
+  GUI_DrawTextCentered(34U, buf, GUI_COLOR_TEXT, GUI_FONT_SM);
+  snprintf(buf, sizeof(buf), "Kroki: %ld", (long)calib_temp_steps);
+  GUI_DrawTextCentered(54U, buf, GUI_COLOR_TEXT, GUI_FONT_LG);
 
-  GUI_DrawButton(&btn_step_m, "-", GUI_COLOR_BTN_MUTE, GUI_COLOR_TEXT);
-  GUI_DrawButton(&btn_step_p, "+", GUI_COLOR_BTN_MUTE, GUI_COLOR_TEXT);
-  GUI_DrawButton(&btn_save_cal, "ULOZIT", GUI_COLOR_BTN_GO, GUI_COLOR_TEXT);
-  GUI_DrawButton(&btn_next_cal, "DALSI", GUI_COLOR_BTN_NAV, GUI_COLOR_TEXT);
-  GUI_DrawButton(&btn_back_cal, "ZPET", GUI_COLOR_BTN_STOP, GUI_COLOR_TEXT);
+  ILI9341_FillRect(96, 82U, 128, 28U, GUI_COLOR_FIELD);
+  GUI_DrawRectBorder(96, 82U, 128, 28U, GUI_COLOR_BORDER);
+  GUI_DrawTextInRect(96, 82U, 128, 28U, "Ustaw wskaznik", GUI_COLOR_MUTED, GUI_FONT_SM);
+
+  GUI_DrawButton(&btn_step_m, "-", GUI_COLOR_BTN_MUTE, GUI_COLOR_TEXT, GUI_FONT_LG);
+  GUI_DrawButton(&btn_step_p, "+", GUI_COLOR_BTN_MUTE, GUI_COLOR_TEXT, GUI_FONT_LG);
+
+  GUI_DrawButton(&btn_save_cal, "ZAPISZ", GUI_COLOR_BTN_GO, GUI_COLOR_TEXT, GUI_FONT_SM);
+  GUI_DrawButton(&btn_next_cal, "DALEJ", GUI_COLOR_BTN_NAV, GUI_COLOR_TEXT, GUI_FONT_SM);
+  GUI_DrawButton(&btn_back_cal, "WSTECZ", GUI_COLOR_BTN_STOP, GUI_COLOR_TEXT, GUI_FONT_SM);
 }
 
 static void GUI_DrawDiagnosticScreen(void)
 {
-  char buf[40];
+  char buf[32];
 
   ILI9341_FillScreen(GUI_COLOR_BG);
-  GUI_DrawTextCentered(8, "DIAGNOSTIKA", GUI_COLOR_TEXT, 2);
+  GUI_DrawHeader("DIAGNOSTYKA");
 
-  snprintf(buf, sizeof(buf), "Servo: %u", (unsigned)diag_last_servo);
-  GUI_DrawText(10, 40, buf, GUI_COLOR_TEXT, 2);
-  snprintf(buf, sizeof(buf), "Vzdal: %d cm", (int)diag_last_dist);
-  GUI_DrawText(10, 65, buf, GUI_COLOR_TEXT, 2);
+  snprintf(buf, sizeof(buf), "Serwo: %u", (unsigned)diag_last_servo);
+  GUI_DrawText(GUI_MARGIN, 34U, buf, GUI_COLOR_TEXT, GUI_FONT_SM);
+  snprintf(buf, sizeof(buf), "Odlegl: %d cm", (int)diag_last_dist);
+  GUI_DrawText(GUI_MARGIN, 52U, buf, GUI_COLOR_TEXT, GUI_FONT_SM);
   snprintf(buf, sizeof(buf), "Timeout: %lu", (unsigned long)diag_timeouts);
-  GUI_DrawText(10, 90, buf, GUI_COLOR_TEXT, 2);
+  GUI_DrawText(GUI_MARGIN, 70U, buf, GUI_COLOR_TEXT, GUI_FONT_SM);
   snprintf(buf, sizeof(buf), "Touch: %u,%u", (unsigned)g_touch_x, (unsigned)g_touch_y);
-  GUI_DrawText(10, 115, buf, GUI_COLOR_TEXT, 2);
+  GUI_DrawText(GUI_MARGIN, 88U, buf, GUI_COLOR_TEXT, GUI_FONT_SM);
   snprintf(buf, sizeof(buf), "Raw: %u,%u", (unsigned)g_touch_raw_x, (unsigned)g_touch_raw_y);
-  GUI_DrawText(10, 140, buf, GUI_COLOR_TEXT, 2);
+  GUI_DrawText(GUI_MARGIN, 106U, buf, GUI_COLOR_TEXT, GUI_FONT_SM);
 
-  GUI_DrawButton(&btn_back, "ZPET", GUI_COLOR_BTN_NAV, GUI_COLOR_TEXT);
+  GUI_DrawText(GUI_MARGIN, 132U, "Dotyk sluzy do strojenia", GUI_COLOR_MUTED, GUI_FONT_SM);
+  GUI_DrawText(GUI_MARGIN, 146U, "kalibracji panelu.", GUI_COLOR_MUTED, GUI_FONT_SM);
+
+  GUI_DrawButton(&btn_back, "WSTECZ", GUI_COLOR_BTN_NAV, GUI_COLOR_TEXT, GUI_FONT_SM);
 }
 
 static void GUI_DrawScanHeader(void)
 {
-  ILI9341_FillRect(0, 0, ILI9341_WIDTH, GUI_SCAN_TOP, GUI_COLOR_PANEL);
-  GUI_DrawText(8, 6, "SKEN", GUI_COLOR_TEXT, 2);
-  GUI_DrawButton(&btn_stop, "STOP", GUI_COLOR_BTN_STOP, GUI_COLOR_TEXT);
+  ILI9341_FillRect(0, 0, ILI9341_WIDTH, GUI_SCAN_TOP, GUI_COLOR_HEADER);
+  GUI_DrawText(GUI_MARGIN, 7U, "SKAN", GUI_COLOR_TEXT, GUI_FONT_SM);
+  GUI_DrawButton(&btn_stop, "STOP", GUI_COLOR_BTN_STOP, GUI_COLOR_TEXT, GUI_FONT_SM);
 }
 
 static void GUI_RedrawCurrent(void)
@@ -461,11 +518,13 @@ static GUI_Action_t GUI_HandleCalibTouch(uint16_t x, uint16_t y)
   {
     StepperMap_MoveBy(-(int32_t)STEPPER_CALIB_STEP);
     calib_temp_steps = StepperMap_GetPosition();
+    GUI_DrawCalibrationScreen();
   }
   else if (GUI_PointInButton(x, y, &btn_step_p))
   {
     StepperMap_MoveBy((int32_t)STEPPER_CALIB_STEP);
     calib_temp_steps = StepperMap_GetPosition();
+    GUI_DrawCalibrationScreen();
   }
   else if (GUI_PointInButton(x, y, &btn_save_cal))
   {
@@ -544,7 +603,7 @@ void GUI_DrawScanFrame(const ScanState_t *scan, const TargetResult_t *target)
 {
   uint8_t i;
   uint16_t chart_h = GUI_SCAN_BOTTOM - GUI_SCAN_TOP;
-  char status[40];
+  char status[32];
 
   if (scan == NULL)
   {
@@ -569,12 +628,12 @@ void GUI_DrawScanFrame(const ScanState_t *scan, const TargetResult_t *target)
         ratio = 1.0f;
       }
       bar_h = (uint16_t)(ratio * (float)chart_h);
-      color = ILI9341_WHITE;
+      color = GUI_COLOR_BAR_OK;
     }
 
-    if (bar_h == 0U)
+    if (bar_h < 3U)
     {
-      bar_h = 4U;
+      bar_h = 3U;
     }
 
     ILI9341_FillRect(x + 1U,
@@ -595,15 +654,17 @@ void GUI_DrawScanFrame(const ScanState_t *scan, const TargetResult_t *target)
 
   if ((target != NULL) && (target->found != 0U))
   {
-    snprintf(status, sizeof(status), "Nejblizsi: %dcm @%u",
+    snprintf(status, sizeof(status), "Cel %dcm pasek %u",
              (int)target->distance_cm, (unsigned)target->bar_index);
   }
   else
   {
-    snprintf(status, sizeof(status), "Cekam na mereni...");
+    snprintf(status, sizeof(status), "Skanowanie...");
   }
 
-  GUI_DrawText(6, GUI_SCAN_BOTTOM + 6, status, GUI_COLOR_TEXT, 2);
+  GUI_DrawTextInRect(0, GUI_SCAN_BOTTOM + 2U, ILI9341_WIDTH,
+                     ILI9341_HEIGHT - GUI_SCAN_BOTTOM - 2U,
+                     status, GUI_COLOR_TEXT, GUI_FONT_SM);
 }
 
 GUI_Action_t GUI_Task(SonarConfig_t *config)
