@@ -38,7 +38,7 @@ static uint16_t touch_raw_x_max = TOUCH_RAW_X_MAX_DEFAULT;
 static uint16_t touch_raw_y_min = TOUCH_RAW_Y_MIN_DEFAULT;
 static uint16_t touch_raw_y_max = TOUCH_RAW_Y_MAX_DEFAULT;
 static uint8_t touch_swap_xy = 0U;
-static uint8_t touch_invert_x = 0U;
+static uint8_t touch_invert_x = 1U;
 static uint8_t touch_invert_y = 0U;
 
 static void XPT2046_Select(void) {
