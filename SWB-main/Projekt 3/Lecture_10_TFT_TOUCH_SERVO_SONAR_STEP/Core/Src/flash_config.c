@@ -52,9 +52,10 @@ void FlashConfig_SetDefaults(SonarConfig_t *config)
   config->touch_raw_x_max = TOUCH_DEFAULT_RAW_MAX;
   config->touch_raw_y_min = TOUCH_DEFAULT_RAW_MIN;
   config->touch_raw_y_max = TOUCH_DEFAULT_RAW_MAX;
-  config->touch_swap_xy = 1U;
+  config->touch_swap_xy = 0U;
   config->touch_invert_x = 0U;
-  config->touch_invert_y = 1U;
+  config->touch_invert_y = 0U;
+  config->touch_calibrated = 0U;
 }
 
 HAL_StatusTypeDef FlashConfig_Load(SonarConfig_t *config)

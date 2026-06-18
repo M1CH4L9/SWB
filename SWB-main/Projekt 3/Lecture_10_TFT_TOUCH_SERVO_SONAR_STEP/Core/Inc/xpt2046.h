@@ -20,11 +20,12 @@ extern volatile uint16_t g_touch_raw_y;
 
 extern volatile uint16_t g_touch_x;
 extern volatile uint16_t g_touch_y;
-extern volatile uint8_t  g_touch_fresh;
 
 void XPT2046_Init(SPI_HandleTypeDef *hspi);
 void XPT2046_ApplyCalibration(const SonarConfig_t *config);
 void XPT2046_Task(void);
 void XPT2046_EXTI_Callback(uint16_t GPIO_Pin);
+uint8_t XPT2046_IsPressed(void);
+uint8_t XPT2046_ReadScreenPoint(uint16_t *screen_x, uint16_t *screen_y);
 
 #endif

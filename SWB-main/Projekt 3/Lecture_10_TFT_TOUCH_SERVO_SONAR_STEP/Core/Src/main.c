@@ -76,7 +76,10 @@ int main(void)
 
   while (1)
   {
-    XPT2046_Task();
+    if (GUI_GetScreen() == GUI_SCREEN_DIAGNOSTIC)
+    {
+      XPT2046_Task();
+    }
 
     gui_action = GUI_Task(&app_config);
     App_HandleScanLogic(gui_action);
