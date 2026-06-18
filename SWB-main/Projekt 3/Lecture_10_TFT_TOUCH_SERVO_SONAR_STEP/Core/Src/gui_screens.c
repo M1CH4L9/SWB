@@ -450,6 +450,38 @@ static void GUI_DrawDiagnosticScreen(void)
   GUI_DrawButton(&btn_touch_cal, "KAL DOTYK", GUI_COLOR_BTN_GO, GUI_COLOR_TEXT, GUI_FONT_SM);
 }
 
+static void GUI_UpdateDiagnosticLive(void)
+{
+  char buf[32];
+
+  ILI9341_FillRect(0, 82U, ILI9341_WIDTH, 56U, GUI_COLOR_BG);
+
+  snprintf(buf, sizeof(buf), "Touch: %u,%u", (unsigned)g_touch_x, (unsigned)g_touch_y);
+  GUI_DrawText(GUI_MARGIN, 88U, buf, GUI_COLOR_TEXT, GUI_FONT_SM);
+  snprintf(buf, sizeof(buf), "Raw: %u,%u", (unsigned)g_touch_raw_x, (unsigned)g_touch_raw_y);
+  GUI_DrawText(GUI_MARGIN, 106U, buf, GUI_COLOR_TEXT, GUI_FONT_SM);
+
+  if (touch_cal_step == TOUCH_CAL_CORNER1)
+  {
+    GUI_DrawText(GUI_MARGIN, 124U, "Krok 1: lewy gorny", GUI_COLOR_HIGHLIGHT, GUI_FONT_SM);
+    GUI_DrawRectBorder(6U, 6U, 20U, 20U, GUI_COLOR_HIGHLIGHT);
+  }
+  else if (touch_cal_step == TOUCH_CAL_CORNER2)
+  {
+    GUI_DrawText(GUI_MARGIN, 124U, "Krok 2: prawy dolny", GUI_COLOR_HIGHLIGHT, GUI_FONT_SM);
+    GUI_DrawRectBorder(294U, 214U, 20U, 20U, GUI_COLOR_HIGHLIGHT);
+  }
+  else if (g_touch_pressed != 0U)
+  {
+    ILI9341_FillRect(g_touch_x, g_touch_y, 6U, 6U, GUI_COLOR_HIGHLIGHT);
+    GUI_DrawText(GUI_MARGIN, 124U, "Dotyk OK", GUI_COLOR_BTN_GO, GUI_FONT_SM);
+  }
+  else
+  {
+    GUI_DrawText(GUI_MARGIN, 124U, "Dotknij ekran", GUI_COLOR_MUTED, GUI_FONT_SM);
+  }
+}
+
 static void GUI_DrawScanHeader(void)
 {
   ILI9341_FillRect(0, 0, ILI9341_WIDTH, GUI_SCAN_TOP, GUI_COLOR_HEADER);
@@ -639,6 +671,7 @@ static GUI_Action_t GUI_HandleDiagnosticTouch(uint16_t x, uint16_t y)
     gui_config->touch_raw_x_max = (x1 < x2) ? x2 : x1;
     gui_config->touch_raw_y_min = (y1 < y2) ? y1 : y2;
     gui_config->touch_raw_y_max = (y1 < y2) ? y2 : y1;
+    gui_config->touch_calibrated = 1U;
 
     (void)FlashConfig_Save(gui_config);
     XPT2046_ApplyCalibration(gui_config);
@@ -771,49 +804,70 @@ void GUI_DrawScanFrame(const ScanState_t *scan, const TargetResult_t *target)
 GUI_Action_t GUI_Task(SonarConfig_t *config)
 {
   GUI_Action_t action = GUI_ACTION_NONE;
-  uint8_t pressed = g_touch_pressed;
+  uint8_t down = XPT2046_IsPressed();
 
   gui_config = config;
 
-  if (pressed && g_touch_fresh && !gui_last_touch)
+  if (down && !gui_last_touch)
   {
-    uint16_t x = g_touch_x;
-    uint16_t y = g_touch_y;
+    uint16_t x = 0U;
+    uint16_t y = 0U;
 
-    switch (gui_screen)
+    if (XPT2046_ReadScreenPoint(&x, &y) != 0U)
     {
-      case GUI_SCREEN_CONFIG:
-        action = GUI_HandleConfigTouch(x, y);
-        break;
-      case GUI_SCREEN_CALIBRATION:
-        action = GUI_HandleCalibTouch(x, y);
-        break;
-      case GUI_SCREEN_DIAGNOSTIC:
-        action = GUI_HandleDiagnosticTouch(x, y);
-        break;
-      case GUI_SCREEN_SCAN:
-        if (GUI_PointInButton(x, y, &btn_stop))
-        {
-          action = GUI_ACTION_STOP_SCAN;
-        }
-        break;
-      default:
-        break;
+      switch (gui_screen)
+      {
+        case GUI_SCREEN_CONFIG:
+          action = GUI_HandleConfigTouch(x, y);
+          break;
+        case GUI_SCREEN_CALIBRATION:
+          action = GUI_HandleCalibTouch(x, y);
+          break;
+        case GUI_SCREEN_DIAGNOSTIC:
+          action = GUI_HandleDiagnosticTouch(x, y);
+          break;
+        case GUI_SCREEN_SCAN:
+          if (GUI_PointInButton(x, y, &btn_stop))
+          {
+            action = GUI_ACTION_STOP_SCAN;
+          }
+          break;
+        default:
+          break;
+      }
     }
   }
   else if ((gui_screen == GUI_SCREEN_DIAGNOSTIC) &&
            (touch_cal_step == TOUCH_CAL_IDLE))
   {
     static uint32_t diag_refresh_tick = 0U;
+    static uint16_t last_dot_x = 0xFFFFU;
+    static uint16_t last_dot_y = 0xFFFFU;
     uint32_t now = HAL_GetTick();
 
-    if ((now - diag_refresh_tick) >= 150U)
+    if ((now - diag_refresh_tick) >= 200U)
     {
       diag_refresh_tick = now;
-      GUI_DrawDiagnosticScreen();
+
+      if (last_dot_x < ILI9341_WIDTH)
+      {
+        ILI9341_FillRect(last_dot_x, last_dot_y, 8U, 8U, GUI_COLOR_BG);
+      }
+
+      GUI_UpdateDiagnosticLive();
+
+      if (g_touch_pressed != 0U)
+      {
+        last_dot_x = g_touch_x;
+        last_dot_y = g_touch_y;
+      }
+      else
+      {
+        last_dot_x = 0xFFFFU;
+      }
     }
   }
 
-  gui_last_touch = pressed;
+  gui_last_touch = down;
   return action;
 }

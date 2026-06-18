@@ -11,10 +11,10 @@
 
 #define FLASH_CONFIG_STORAGE_ADDR   0x0807F800U
 #define FLASH_CONFIG_MAGIC          0x534E5233U
-#define FLASH_CONFIG_VERSION        2U
+#define FLASH_CONFIG_VERSION        3U
 
-#define TOUCH_DEFAULT_RAW_MIN       300U
-#define TOUCH_DEFAULT_RAW_MAX       3800U
+#define TOUCH_DEFAULT_RAW_MIN       200U
+#define TOUCH_DEFAULT_RAW_MAX       3900U
 
 #define SERVO_DEFAULT_MIN           20U
 #define SERVO_DEFAULT_MAX           320U
@@ -36,6 +36,7 @@ typedef struct
   uint8_t touch_swap_xy;
   uint8_t touch_invert_x;
   uint8_t touch_invert_y;
+  uint8_t touch_calibrated;
 } SonarConfig_t;
 
 void FlashConfig_SetDefaults(SonarConfig_t *config);
