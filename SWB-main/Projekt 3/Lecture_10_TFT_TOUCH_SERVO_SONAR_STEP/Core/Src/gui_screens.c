@@ -405,8 +405,19 @@ static void GUI_DrawDiagnosticScreen(void)
   snprintf(buf, sizeof(buf), "Raw: %u,%u", (unsigned)g_touch_raw_x, (unsigned)g_touch_raw_y);
   GUI_DrawText(GUI_MARGIN, 106U, buf, GUI_COLOR_TEXT, GUI_FONT_SM);
 
-  GUI_DrawText(GUI_MARGIN, 132U, "Dotyk sluzy do strojenia", GUI_COLOR_MUTED, GUI_FONT_SM);
-  GUI_DrawText(GUI_MARGIN, 146U, "kalibracji panelu.", GUI_COLOR_MUTED, GUI_FONT_SM);
+  if (g_touch_pressed != 0U)
+  {
+    ILI9341_FillRect(g_touch_x, g_touch_y, 6U, 6U, GUI_COLOR_HIGHLIGHT);
+    GUI_DrawText(GUI_MARGIN, 124U, "Dotyk OK", GUI_COLOR_BTN_GO, GUI_FONT_SM);
+  }
+  else
+  {
+    GUI_DrawText(GUI_MARGIN, 124U, "Dotknij ekran", GUI_COLOR_MUTED, GUI_FONT_SM);
+  }
+
+  GUI_DrawText(GUI_MARGIN, 146U, "Jesli trafiasz obok", GUI_COLOR_MUTED, GUI_FONT_SM);
+  GUI_DrawText(GUI_MARGIN, 160U, "przyciskow, stroj", GUI_COLOR_MUTED, GUI_FONT_SM);
+  GUI_DrawText(GUI_MARGIN, 174U, "TOUCH_RAW w xpt2046", GUI_COLOR_MUTED, GUI_FONT_SM);
 
   GUI_DrawButton(&btn_back, "WSTECZ", GUI_COLOR_BTN_NAV, GUI_COLOR_TEXT, GUI_FONT_SM);
 }
@@ -703,6 +714,17 @@ GUI_Action_t GUI_Task(SonarConfig_t *config)
         break;
       default:
         break;
+    }
+  }
+  else if (gui_screen == GUI_SCREEN_DIAGNOSTIC)
+  {
+    static uint32_t diag_refresh_tick = 0U;
+    uint32_t now = HAL_GetTick();
+
+    if ((now - diag_refresh_tick) >= 150U)
+    {
+      diag_refresh_tick = now;
+      GUI_DrawDiagnosticScreen();
     }
   }
 
