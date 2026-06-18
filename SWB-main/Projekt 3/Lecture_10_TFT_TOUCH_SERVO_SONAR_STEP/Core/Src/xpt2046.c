@@ -36,13 +36,15 @@
 
 #define TOUCH_SCREEN_W    320
 #define TOUCH_SCREEN_H    240
+#define TOUCH_RAW_MIN_VALID 80U
 
 /*
- * If the axes are swapped or inverted, change them here.
+ * ILI9341 rotation-0 modules usually need inverted Y.
+ * Tune TOUCH_RAW_* on the diagnostic screen if touches miss buttons.
  */
 #define TOUCH_SWAP_XY     0
 #define TOUCH_INVERT_X    0
-#define TOUCH_INVERT_Y    0
+#define TOUCH_INVERT_Y    1
 
 static SPI_HandleTypeDef *touch_spi = NULL;
 
@@ -213,42 +215,35 @@ void XPT2046_EXTI_Callback(uint16_t GPIO_Pin) {
 
 void XPT2046_Task(void) {
 	uint32_t now = HAL_GetTick();
+	uint8_t down = XPT2046_IsPressed();
 
-	/*
-	 * If there is no touch and there was no interrupt, we do nothing.
-	 */
-	if (!g_touch_irq_flag && !XPT2046_IsPressed()) {
-		g_touch_pressed = 0;
+	if (!down && (g_touch_irq_flag == 0U)) {
+		g_touch_pressed = 0U;
 		return;
 	}
 
-	/*
-	 * We limit the reading frequency.
-	 * While holding your finger, we refresh the position every 20 ms.
-	 */
+	g_touch_pressed = 1U;
+
 	if ((now - last_touch_read_ms) < XPT2046_READ_PERIOD_MS) {
 		return;
 	}
 
-	last_touch_read_ms = now;
-	g_touch_irq_flag = 0;
-
-	if (!XPT2046_IsPressed()) {
-		g_touch_pressed = 0;
+	if (!down) {
+		g_touch_irq_flag = 0U;
 		return;
 	}
 
-	/*
-	 * Reading position.
-	 * Note: On some modules, X and Y may be reversed.
-	 */
+	last_touch_read_ms = now;
+	g_touch_irq_flag = 0U;
+
 	uint16_t raw_x = XPT2046_ReadADC_Avg(XPT2046_CMD_READ_X);
 	uint16_t raw_y = XPT2046_ReadADC_Avg(XPT2046_CMD_READ_Y);
 
+	if ((raw_x < TOUCH_RAW_MIN_VALID) || (raw_y < TOUCH_RAW_MIN_VALID)) {
+		return;
+	}
+
 	g_touch_raw_x = raw_x;
 	g_touch_raw_y = raw_y;
-
 	XPT2046_MapRawToScreen(raw_x, raw_y);
-
-	g_touch_pressed = 1;
 }
