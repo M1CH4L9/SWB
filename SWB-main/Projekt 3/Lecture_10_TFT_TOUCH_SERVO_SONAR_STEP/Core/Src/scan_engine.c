@@ -1,6 +1,6 @@
 /*
  * scan_engine.c
- * Nelinearni sken: servo + sonar bez zablokovani hlavni smycky
+ * Non-blocking scan engine: servo + sonar
  */
 
 #include "scan_engine.h"

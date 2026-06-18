@@ -2,7 +2,7 @@
 /**
  ******************************************************************************
  * @file           : main.c
- * @brief          : Projekt 3 - skenujici sonar s ukazatelem
+ * @brief          : Project 3 - scanning sonar with pointer
  ******************************************************************************
  */
 /* USER CODE END Header */

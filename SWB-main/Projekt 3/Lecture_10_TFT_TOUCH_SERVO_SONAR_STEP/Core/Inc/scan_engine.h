@@ -1,6 +1,6 @@
 /*
  * scan_engine.h
- * Nelinearni skenovani servem a sonarem
+ * Non-linear scan with servo and sonar
  */
 
 #ifndef SCAN_ENGINE_H

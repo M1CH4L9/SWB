@@ -1,6 +1,6 @@
 /*
  * stepper_map.h
- * Mapovani pozice serva na krokovy motor (ukazatel)
+ * Servo position to stepper motor mapping (pointer)
  */
 
 #ifndef STEPPER_MAP_H

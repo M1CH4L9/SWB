@@ -1,6 +1,6 @@
 /*
  * stepper_map.c
- * Kalibrace a pohyb ukazatele na krokovem motoru
+ * Stepper pointer calibration and movement
  */
 
 #include "stepper_map.h"
