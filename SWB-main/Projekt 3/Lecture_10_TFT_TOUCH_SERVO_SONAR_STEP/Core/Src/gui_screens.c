@@ -9,6 +9,7 @@
 #include "servo.h"
 #include "stepper_map.h"
 #include "xpt2046.h"
+#include "flash_config.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -35,6 +36,7 @@
 #define GUI_FONT_SM         1U
 #define GUI_FONT_LG         2U
 #define GUI_MARGIN          8U
+#define GUI_TOUCH_PAD       8U
 
 typedef struct
 {
@@ -51,6 +53,13 @@ typedef enum
   CALIB_STEP_RIGHT
 } CalibStep_t;
 
+typedef enum
+{
+  TOUCH_CAL_IDLE = 0,
+  TOUCH_CAL_CORNER1,
+  TOUCH_CAL_CORNER2
+} TouchCalStep_t;
+
 static GUI_Screen_t gui_screen = GUI_SCREEN_CONFIG;
 static uint8_t gui_last_touch = 0U;
 static uint8_t gui_continuous = 1U;
@@ -60,6 +69,9 @@ static int32_t calib_temp_steps = 0U;
 static uint32_t diag_timeouts = 0U;
 static float diag_last_dist = 0.0f;
 static uint16_t diag_last_servo = 0U;
+static TouchCalStep_t touch_cal_step = TOUCH_CAL_IDLE;
+static uint16_t touch_cal_raw1_x = 0U;
+static uint16_t touch_cal_raw1_y = 0U;
 
 static SonarConfig_t *gui_config = NULL;
 
@@ -133,6 +145,7 @@ static const GUI_Button_t btn_diag = {216, 198, 96, 34};
 
 static const GUI_Button_t btn_stop = {248, 2, 64, 20};
 static const GUI_Button_t btn_back = {8, 198, 96, 34};
+static const GUI_Button_t btn_touch_cal = {112, 198, 96, 34};
 
 static const GUI_Button_t btn_step_m = {8, 118, 72, 40};
 static const GUI_Button_t btn_step_p = {240, 118, 72, 40};
@@ -300,8 +313,12 @@ static void GUI_DrawValueRow(uint16_t y, const char *label, const char *value,
 
 static uint8_t GUI_PointInButton(uint16_t x, uint16_t y, const GUI_Button_t *btn)
 {
-  return (x >= btn->x && y >= btn->y &&
-          x < (btn->x + btn->w) && y < (btn->y + btn->h)) ? 1U : 0U;
+  uint16_t x0 = (btn->x > GUI_TOUCH_PAD) ? (btn->x - GUI_TOUCH_PAD) : 0U;
+  uint16_t y0 = (btn->y > GUI_TOUCH_PAD) ? (btn->y - GUI_TOUCH_PAD) : 0U;
+  uint16_t x1 = btn->x + btn->w + GUI_TOUCH_PAD;
+  uint16_t y1 = btn->y + btn->h + GUI_TOUCH_PAD;
+
+  return (x >= x0 && y >= y0 && x < x1 && y < y1) ? 1U : 0U;
 }
 
 static void GUI_CalibMoveServo(void)
@@ -405,7 +422,17 @@ static void GUI_DrawDiagnosticScreen(void)
   snprintf(buf, sizeof(buf), "Raw: %u,%u", (unsigned)g_touch_raw_x, (unsigned)g_touch_raw_y);
   GUI_DrawText(GUI_MARGIN, 106U, buf, GUI_COLOR_TEXT, GUI_FONT_SM);
 
-  if (g_touch_pressed != 0U)
+  if (touch_cal_step == TOUCH_CAL_CORNER1)
+  {
+    GUI_DrawText(GUI_MARGIN, 124U, "Krok 1: lewy gorny", GUI_COLOR_HIGHLIGHT, GUI_FONT_SM);
+    GUI_DrawRectBorder(6U, 6U, 20U, 20U, GUI_COLOR_HIGHLIGHT);
+  }
+  else if (touch_cal_step == TOUCH_CAL_CORNER2)
+  {
+    GUI_DrawText(GUI_MARGIN, 124U, "Krok 2: prawy dolny", GUI_COLOR_HIGHLIGHT, GUI_FONT_SM);
+    GUI_DrawRectBorder(294U, 214U, 20U, 20U, GUI_COLOR_HIGHLIGHT);
+  }
+  else if (g_touch_pressed != 0U)
   {
     ILI9341_FillRect(g_touch_x, g_touch_y, 6U, 6U, GUI_COLOR_HIGHLIGHT);
     GUI_DrawText(GUI_MARGIN, 124U, "Dotyk OK", GUI_COLOR_BTN_GO, GUI_FONT_SM);
@@ -416,10 +443,11 @@ static void GUI_DrawDiagnosticScreen(void)
   }
 
   GUI_DrawText(GUI_MARGIN, 146U, "Jesli trafiasz obok", GUI_COLOR_MUTED, GUI_FONT_SM);
-  GUI_DrawText(GUI_MARGIN, 160U, "przyciskow, stroj", GUI_COLOR_MUTED, GUI_FONT_SM);
-  GUI_DrawText(GUI_MARGIN, 174U, "TOUCH_RAW w xpt2046", GUI_COLOR_MUTED, GUI_FONT_SM);
+  GUI_DrawText(GUI_MARGIN, 160U, "przyciskow, uzyc", GUI_COLOR_MUTED, GUI_FONT_SM);
+  GUI_DrawText(GUI_MARGIN, 174U, "KAL DOTYK na dole", GUI_COLOR_MUTED, GUI_FONT_SM);
 
   GUI_DrawButton(&btn_back, "WSTECZ", GUI_COLOR_BTN_NAV, GUI_COLOR_TEXT, GUI_FONT_SM);
+  GUI_DrawButton(&btn_touch_cal, "KAL DOTYK", GUI_COLOR_BTN_GO, GUI_COLOR_TEXT, GUI_FONT_SM);
 }
 
 static void GUI_DrawScanHeader(void)
@@ -457,8 +485,11 @@ static void GUI_RedrawCurrent(void)
 
 static GUI_Action_t GUI_HandleConfigTouch(uint16_t x, uint16_t y)
 {
+  uint8_t handled = 0U;
+
   if (GUI_PointInButton(x, y, &btn_min_m))
   {
+    handled = 1U;
     if (gui_config->servo_min > 0U)
     {
       gui_config->servo_min--;
@@ -466,6 +497,7 @@ static GUI_Action_t GUI_HandleConfigTouch(uint16_t x, uint16_t y)
   }
   else if (GUI_PointInButton(x, y, &btn_min_p))
   {
+    handled = 1U;
     if (gui_config->servo_min < gui_config->servo_max - 10U)
     {
       gui_config->servo_min++;
@@ -473,6 +505,7 @@ static GUI_Action_t GUI_HandleConfigTouch(uint16_t x, uint16_t y)
   }
   else if (GUI_PointInButton(x, y, &btn_max_m))
   {
+    handled = 1U;
     if (gui_config->servo_max > gui_config->servo_min + 10U)
     {
       gui_config->servo_max--;
@@ -480,6 +513,7 @@ static GUI_Action_t GUI_HandleConfigTouch(uint16_t x, uint16_t y)
   }
   else if (GUI_PointInButton(x, y, &btn_max_p))
   {
+    handled = 1U;
     if (gui_config->servo_max < SERVO_MAX_POSITION)
     {
       gui_config->servo_max++;
@@ -487,6 +521,7 @@ static GUI_Action_t GUI_HandleConfigTouch(uint16_t x, uint16_t y)
   }
   else if (GUI_PointInButton(x, y, &btn_time_m))
   {
+    handled = 1U;
     if (gui_config->scan_time_ms > 2000U)
     {
       gui_config->scan_time_ms -= 500U;
@@ -494,6 +529,7 @@ static GUI_Action_t GUI_HandleConfigTouch(uint16_t x, uint16_t y)
   }
   else if (GUI_PointInButton(x, y, &btn_time_p))
   {
+    handled = 1U;
     if (gui_config->scan_time_ms < 10000U)
     {
       gui_config->scan_time_ms += 500U;
@@ -514,12 +550,17 @@ static GUI_Action_t GUI_HandleConfigTouch(uint16_t x, uint16_t y)
   }
   else if (GUI_PointInButton(x, y, &btn_diag))
   {
+    touch_cal_step = TOUCH_CAL_IDLE;
     gui_screen = GUI_SCREEN_DIAGNOSTIC;
     GUI_DrawDiagnosticScreen();
     return GUI_ACTION_OPEN_DIAG;
   }
 
-  GUI_DrawConfigScreen();
+  if (handled != 0U)
+  {
+    GUI_DrawConfigScreen();
+  }
+
   return GUI_ACTION_NONE;
 }
 
@@ -576,6 +617,54 @@ static GUI_Action_t GUI_HandleCalibTouch(uint16_t x, uint16_t y)
   return GUI_ACTION_NONE;
 }
 
+static GUI_Action_t GUI_HandleDiagnosticTouch(uint16_t x, uint16_t y)
+{
+  if (touch_cal_step == TOUCH_CAL_CORNER1)
+  {
+    touch_cal_raw1_x = g_touch_raw_x;
+    touch_cal_raw1_y = g_touch_raw_y;
+    touch_cal_step = TOUCH_CAL_CORNER2;
+    GUI_DrawDiagnosticScreen();
+    return GUI_ACTION_NONE;
+  }
+
+  if (touch_cal_step == TOUCH_CAL_CORNER2)
+  {
+    uint16_t x1 = touch_cal_raw1_x;
+    uint16_t y1 = touch_cal_raw1_y;
+    uint16_t x2 = g_touch_raw_x;
+    uint16_t y2 = g_touch_raw_y;
+
+    gui_config->touch_raw_x_min = (x1 < x2) ? x1 : x2;
+    gui_config->touch_raw_x_max = (x1 < x2) ? x2 : x1;
+    gui_config->touch_raw_y_min = (y1 < y2) ? y1 : y2;
+    gui_config->touch_raw_y_max = (y1 < y2) ? y2 : y1;
+
+    (void)FlashConfig_Save(gui_config);
+    XPT2046_ApplyCalibration(gui_config);
+    touch_cal_step = TOUCH_CAL_IDLE;
+    GUI_DrawDiagnosticScreen();
+    return GUI_ACTION_NONE;
+  }
+
+  if (GUI_PointInButton(x, y, &btn_touch_cal))
+  {
+    touch_cal_step = TOUCH_CAL_CORNER1;
+    GUI_DrawDiagnosticScreen();
+    return GUI_ACTION_NONE;
+  }
+
+  if (GUI_PointInButton(x, y, &btn_back))
+  {
+    touch_cal_step = TOUCH_CAL_IDLE;
+    gui_screen = GUI_SCREEN_CONFIG;
+    GUI_DrawConfigScreen();
+    return GUI_ACTION_BACK_CONFIG;
+  }
+
+  return GUI_ACTION_NONE;
+}
+
 void GUI_Init(SonarConfig_t *config)
 {
   gui_config = config;
@@ -583,6 +672,7 @@ void GUI_Init(SonarConfig_t *config)
   gui_last_touch = 0U;
   gui_continuous = 1U;
   calib_step = CALIB_STEP_LEFT;
+  touch_cal_step = TOUCH_CAL_IDLE;
 
   GUI_RedrawCurrent();
 }
@@ -685,7 +775,7 @@ GUI_Action_t GUI_Task(SonarConfig_t *config)
 
   gui_config = config;
 
-  if (pressed && !gui_last_touch)
+  if (pressed && g_touch_fresh && !gui_last_touch)
   {
     uint16_t x = g_touch_x;
     uint16_t y = g_touch_y;
@@ -699,12 +789,7 @@ GUI_Action_t GUI_Task(SonarConfig_t *config)
         action = GUI_HandleCalibTouch(x, y);
         break;
       case GUI_SCREEN_DIAGNOSTIC:
-        if (GUI_PointInButton(x, y, &btn_back))
-        {
-          gui_screen = GUI_SCREEN_CONFIG;
-          GUI_DrawConfigScreen();
-          action = GUI_ACTION_BACK_CONFIG;
-        }
+        action = GUI_HandleDiagnosticTouch(x, y);
         break;
       case GUI_SCREEN_SCAN:
         if (GUI_PointInButton(x, y, &btn_stop))
@@ -716,7 +801,8 @@ GUI_Action_t GUI_Task(SonarConfig_t *config)
         break;
     }
   }
-  else if (gui_screen == GUI_SCREEN_DIAGNOSTIC)
+  else if ((gui_screen == GUI_SCREEN_DIAGNOSTIC) &&
+           (touch_cal_step == TOUCH_CAL_IDLE))
   {
     static uint32_t diag_refresh_tick = 0U;
     uint32_t now = HAL_GetTick();
