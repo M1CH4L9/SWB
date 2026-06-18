@@ -94,7 +94,7 @@ Piny sa zdefiniowane w pliku `Core/Inc/main.h` (m.in. PB10 serwo, PC6/PC8 sonar,
 4. Program sie skompiluje (jesli trzeba) i wgra na MCU.
 5. Jesli wszedles w tryb **Debug** - kliknij czerwony **Terminate** (kwadrat) zeby program normalnie dzialal bez debuggera zatrzymujacego procesor.
 
-Po udanym flashu ekran TFT powinien pokazac ekran **KONFIGURACE**.
+Po udanym flashu ekran TFT powinien pokazac ekran **KONFIGURACJA SKANU**.
 
 ---
 
@@ -102,10 +102,10 @@ Po udanym flashu ekran TFT powinien pokazac ekran **KONFIGURACE**.
 
 1. **Ekran konfiguracji** - ustaw Min/Max serwa i czas skanu przyciskami +/-.
 2. Wejdz w **KALIBR** - skalibruj wskaznik krokowy:
-   - Dla kazdego kroku (LEVA, STRED, PRAVA) ustaw serwo automatycznie, dopasuj wskaznik przyciskami +/- i kliknij **ULOZIT**.
-   - Po trzech punktach kliknij **ZPET**.
+   - Dla kazdego kroku (LEWY, SRODEK, PRAWY) ustaw serwo automatycznie, dopasuj wskaznik przyciskami +/- i kliknij **ZAPISZ**, potem **DALEJ**.
+   - Po trzech punktach kliknij **WSTECZ**.
 3. Kliknij **START** - przejdziesz do trybu skanu.
-4. Postaw cos przed sonarem - zobaczysz paski i podswietlenie najblizszego celu.
+4. Postaw cos przed sonarem - zobaczysz paski, **Odczyt** (biezacy pomiar) i zolte obramowanie **najblizszego celu**.
 5. **STOP** - powrot do konfiguracji.
 
 ---
@@ -119,10 +119,8 @@ Po udanym flashu ekran TFT powinien pokazac ekran **KONFIGURACE**.
 
 ### Dotyk nie trafia w przyciski
 
-- Otworz `Core/Src/xpt2046.c`.
-- Zmien wartosci `TOUCH_RAW_X_MIN/MAX`, `TOUCH_RAW_Y_MIN/MAX` albo ustaw:
-  - `TOUCH_INVERT_X` / `TOUCH_INVERT_Y` na `1`
-- Zapisz, zbuduj ponownie, wgraj.
+- Wejdz w **DIAG** → **KAL DOTYK** → dotknij lewy gorny rog, potem prawy dolny.
+- Jesli nadal pudlujesz: w `Core/Src/xpt2046.c` mozesz zmienic `touch_invert_x` / `touch_invert_y` w domyslnych ustawieniach flash.
 
 ### Sonar nie mierzy
 
